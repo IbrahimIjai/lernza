@@ -17,10 +17,10 @@ import type { MilestoneInfo } from "@/lib/contracts/milestone"
 import { rewardsClient } from "@/lib/contracts/rewards"
 
 // Sub-components
-import { QuestHeader } from "@/components/quest-detail/QuestHeader"
-import { QuestStats } from "@/components/quest-detail/QuestStats"
-import { QuestMilestones } from "@/components/quest-detail/QuestMilestones"
-import { QuestEnrollees } from "@/components/quest-detail/QuestEnrollees"
+import { QuestHeader } from "@/components/quest-detail/quest-header"
+import { QuestStats } from "@/components/quest-detail/quest-stats"
+import { QuestMilestones } from "@/components/quest-detail/quest-milestones"
+import { QuestEnrollees } from "@/components/quest-detail/quest-enrollees"
 
 interface QuestViewProps {
   questId: number
