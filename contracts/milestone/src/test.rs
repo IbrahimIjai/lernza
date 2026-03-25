@@ -5,7 +5,7 @@ use soroban_sdk::{testutils::Address as _, Address, Env, String};
 
 // Import the quest contract for testing
 extern crate quest;
-use quest::{QuestContract, QuestContractClient};
+use quest::{QuestContract, QuestContractClient, Visibility};
 
 fn setup() -> (
     Env,
@@ -50,6 +50,7 @@ fn create_ms(
             &String::from_str(env, "Quest"),
             &String::from_str(env, "Quest description"),
             &Address::generate(env), // token address
+            &Visibility::Public,
         );
     }
     
@@ -64,8 +65,8 @@ fn create_ms(
 
 #[test]
 fn test_create_milestone() {
-    let (env, client, quest_client, owner) = setup();
-    let id = create_ms(&env, &client, &quest_client, &owner, 0, "Build your first API", 100);
+    let (env, client, _quest_client, owner) = setup();
+    let id = create_ms(&env, &client, &_quest_client, &owner, 0, "Build your first API", 100);
     assert_eq!(id, 0);
     assert_eq!(client.get_milestone_count(&0), 1);
 
@@ -77,10 +78,10 @@ fn test_create_milestone() {
 
 #[test]
 fn test_create_multiple_milestones() {
-    let (env, client, quest_client, owner) = setup();
-    let id0 = create_ms(&env, &client, &quest_client, &owner, 0, "Task 1", 50);
-    let id1 = create_ms(&env, &client, &quest_client, &owner, 0, "Task 2", 100);
-    let id2 = create_ms(&env, &client, &quest_client, &owner, 0, "Task 3", 200);
+    let (env, client, _quest_client, owner) = setup();
+    let id0 = create_ms(&env, &client, &_quest_client, &owner, 0, "Task 1", 50);
+    let id1 = create_ms(&env, &client, &_quest_client, &owner, 0, "Task 2", 100);
+    let id2 = create_ms(&env, &client, &_quest_client, &owner, 0, "Task 3", 200);
     assert_eq!(id0, 0);
     assert_eq!(id1, 1);
     assert_eq!(id2, 2);
@@ -89,12 +90,12 @@ fn test_create_multiple_milestones() {
 
 #[test]
 fn test_milestones_per_quest_are_independent() {
-    let (env, client, quest_client, owner) = setup();
-    create_ms(&env, &client, &quest_client, &owner, 0, "Quest0 Task", 50);
-    create_ms(&env, &client, &quest_client, &owner, 0, "Quest0 Task 2", 75);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Quest0 Task", 50);
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Quest0 Task 2", 75);
 
     let owner2 = Address::generate(&env);
-    create_ms(&env, &client, &quest_client, &owner2, 1, "Quest1 Task", 100);
+    create_ms(&env, &client, &_quest_client, &owner2, 1, "Quest1 Task", 100);
 
     assert_eq!(client.get_milestone_count(&0), 2);
     assert_eq!(client.get_milestone_count(&1), 1);
@@ -102,9 +103,9 @@ fn test_milestones_per_quest_are_independent() {
 
 #[test]
 fn test_get_milestones() {
-    let (env, client, quest_client, owner) = setup();
-    create_ms(&env, &client, &quest_client, &owner, 0, "A", 10);
-    create_ms(&env, &client, &quest_client, &owner, 0, "B", 20);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "A", 10);
+    create_ms(&env, &client, &_quest_client, &owner, 0, "B", 20);
 
     let milestones = client.get_milestones(&0);
     assert_eq!(milestones.len(), 2);
@@ -120,8 +121,8 @@ fn test_get_milestones() {
 
 #[test]
 fn test_verify_completion() {
-    let (env, client, quest_client, owner) = setup();
-    create_ms(&env, &client, &quest_client, &owner, 0, "Deploy a contract", 100);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Deploy a contract", 100);
 
     let enrollee = Address::generate(&env);
     let reward = client.verify_completion(&owner, &0, &0, &enrollee);
@@ -132,9 +133,9 @@ fn test_verify_completion() {
 
 #[test]
 fn test_verify_multiple_completions() {
-    let (env, client, quest_client, owner) = setup();
-    create_ms(&env, &client, &quest_client, &owner, 0, "Task 1", 50);
-    create_ms(&env, &client, &quest_client, &owner, 0, "Task 2", 100);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task 1", 50);
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task 2", 100);
 
     let enrollee = Address::generate(&env);
     client.verify_completion(&owner, &0, &0, &enrollee);
@@ -147,8 +148,8 @@ fn test_verify_multiple_completions() {
 
 #[test]
 fn test_double_verify_fails() {
-    let (env, client, quest_client, owner) = setup();
-    create_ms(&env, &client, &quest_client, &owner, 0, "Task", 50);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 50);
 
     let enrollee = Address::generate(&env);
     client.verify_completion(&owner, &0, &0, &enrollee);
@@ -159,8 +160,8 @@ fn test_double_verify_fails() {
 
 #[test]
 fn test_wrong_owner_cannot_verify() {
-    let (env, client, quest_client, owner) = setup();
-    create_ms(&env, &client, &quest_client, &owner, 0, "Task", 50);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 50);
 
     let imposter = Address::generate(&env);
     let enrollee = Address::generate(&env);
@@ -170,9 +171,9 @@ fn test_wrong_owner_cannot_verify() {
 
 #[test]
 fn test_wrong_owner_cannot_create() {
-    let (env, client, quest_client, owner) = setup();
+    let (env, client, _quest_client, owner) = setup();
     // First owner creates the quest and milestone
-    create_ms(&env, &client, &quest_client, &owner, 0, "Task", 50);
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 50);
 
     // Different owner tries to add to same quest
     let imposter = Address::generate(&env);
@@ -195,8 +196,8 @@ fn test_milestone_not_found() {
 
 #[test]
 fn test_not_completed_by_default() {
-    let (env, client, quest_client, owner) = setup();
-    create_ms(&env, &client, &quest_client, &owner, 0, "Task", 50);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 50);
     let enrollee = Address::generate(&env);
     assert!(!client.is_completed(&0, &0, &enrollee));
     assert_eq!(client.get_enrollee_completions(&0, &enrollee), 0);
@@ -204,8 +205,8 @@ fn test_not_completed_by_default() {
 
 #[test]
 fn test_zero_reward_milestone() {
-    let (env, client, quest_client, owner) = setup();
-    let id = create_ms(&env, &client, &quest_client, &owner, 0, "Free task", 0);
+    let (env, client, _quest_client, owner) = setup();
+    let id = create_ms(&env, &client, &_quest_client, &owner, 0, "Free task", 0);
     assert_eq!(id, 0);
 
     let enrollee = Address::generate(&env);
@@ -217,9 +218,9 @@ fn test_zero_reward_milestone() {
 
 #[test]
 fn test_custom_mode_uses_per_milestone_amounts() {
-    let (env, client, owner) = setup();
-    create_ms(&env, &client, &owner, 0, "Task 1", 100);
-    create_ms(&env, &client, &owner, 0, "Task 2", 200);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task 1", 100);
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task 2", 200);
 
     client.set_distribution_mode(&owner, &0, &DistributionMode::Custom, &0);
 
@@ -231,9 +232,9 @@ fn test_custom_mode_uses_per_milestone_amounts() {
 
 #[test]
 fn test_flat_mode_equal_rewards() {
-    let (env, client, owner) = setup();
-    create_ms(&env, &client, &owner, 0, "Task 1", 100);
-    create_ms(&env, &client, &owner, 0, "Task 2", 999); // per-milestone amount is ignored
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task 1", 100);
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task 2", 999); // per-milestone amount is ignored
 
     client.set_distribution_mode(&owner, &0, &DistributionMode::Flat, &50);
 
@@ -245,8 +246,8 @@ fn test_flat_mode_equal_rewards() {
 
 #[test]
 fn test_flat_mode_invalid_amount() {
-    let (env, client, owner) = setup();
-    create_ms(&env, &client, &owner, 0, "Task", 100);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 100);
 
     let result = client.try_set_distribution_mode(&owner, &0, &DistributionMode::Flat, &0);
     assert_eq!(result, Err(Ok(Error::InvalidAmount)));
@@ -254,8 +255,8 @@ fn test_flat_mode_invalid_amount() {
 
 #[test]
 fn test_competitive_mode_first_winners_rewarded() {
-    let (env, client, owner) = setup();
-    create_ms(&env, &client, &owner, 0, "Task", 100);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 100);
     client.set_distribution_mode(&owner, &0, &DistributionMode::Competitive(2), &0);
 
     let e1 = Address::generate(&env);
@@ -266,8 +267,8 @@ fn test_competitive_mode_first_winners_rewarded() {
 
 #[test]
 fn test_competitive_mode_exhausted_gets_nothing() {
-    let (env, client, owner) = setup();
-    create_ms(&env, &client, &owner, 0, "Task", 100);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 100);
     client.set_distribution_mode(&owner, &0, &DistributionMode::Competitive(2), &0);
 
     let e1 = Address::generate(&env);
@@ -282,9 +283,9 @@ fn test_competitive_mode_exhausted_gets_nothing() {
 
 #[test]
 fn test_competitive_mode_counts_per_milestone() {
-    let (env, client, owner) = setup();
-    create_ms(&env, &client, &owner, 0, "Task 1", 100);
-    create_ms(&env, &client, &owner, 0, "Task 2", 200);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task 1", 100);
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task 2", 200);
     client.set_distribution_mode(&owner, &0, &DistributionMode::Competitive(1), &0);
 
     let e1 = Address::generate(&env);
@@ -294,6 +295,8 @@ fn test_competitive_mode_counts_per_milestone() {
     assert_eq!(client.verify_completion(&owner, &0, &0, &e2), 0);
     // Milestone 1: e2 is the winner (fresh count)
     assert_eq!(client.verify_completion(&owner, &0, &1, &e2), 200);
+}
+
 // ---- Security tests ----
 
 /// CRIT-01: Any address that calls create_milestone first for a quest_id
@@ -314,6 +317,7 @@ fn test_milestone_ownership_race_condition() {
         &String::from_str(&env, "Legitimate Quest"),
         &String::from_str(&env, "Description"),
         &Address::generate(&env), // token address
+        &Visibility::Public,
     );
 
     // Attacker tries to call create_milestone first for quest 0
@@ -353,8 +357,8 @@ fn test_milestone_ownership_race_condition() {
 /// address can have milestone completion recorded and trigger reward distribution.
 #[test]
 fn test_verify_completion_no_enrollment_check() {
-    let (env, client, quest_client, owner) = setup();
-    create_ms(&env, &client, &quest_client, &owner, 0, "Task", 100);
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 100);
 
     // This address has never been enrolled in any quest contract
     let unenrolled = Address::generate(&env);
@@ -364,4 +368,147 @@ fn test_verify_completion_no_enrollment_check() {
     assert_eq!(reward, 100);
     assert!(client.is_completed(&0, &0, &unenrolled));
     assert_eq!(client.get_enrollee_completions(&0, &unenrolled), 1);
+}
+
+// --- Edge Case Tests ---
+
+#[test]
+fn test_create_milestone_empty_title() {
+    let (env, client, _quest_client, owner) = setup();
+    let result = client.try_create_milestone(
+        &owner,
+        &0,
+        &String::from_str(&env, ""), // Empty title
+        &String::from_str(&env, "Description"),
+        &100,
+    );
+    // Should succeed - contract doesn't validate empty strings
+    assert_eq!(result, Ok(Ok(0)));
+    
+    let ms = client.get_milestone(&0, &0);
+    assert_eq!(ms.title, String::from_str(&env, ""));
+}
+
+#[test]
+fn test_create_milestone_empty_description() {
+    let (env, client, _quest_client, owner) = setup();
+    let result = client.try_create_milestone(
+        &owner,
+        &0,
+        &String::from_str(&env, "Title"),
+        &String::from_str(&env, ""), // Empty description
+        &100,
+    );
+    // Should succeed - contract doesn't validate empty strings
+    assert_eq!(result, Ok(Ok(0)));
+    
+    let ms = client.get_milestone(&0, &0);
+    assert_eq!(ms.description, String::from_str(&env, ""));
+}
+
+#[test]
+fn test_create_milestone_both_empty() {
+    let (env, client, _quest_client, owner) = setup();
+    let result = client.try_create_milestone(
+        &owner,
+        &0,
+        &String::from_str(&env, ""), // Empty title
+        &String::from_str(&env, ""), // Empty description
+        &100,
+    );
+    // Should succeed - contract doesn't validate empty strings
+    assert_eq!(result, Ok(Ok(0)));
+    
+    let ms = client.get_milestone(&0, &0);
+    assert_eq!(ms.title, String::from_str(&env, ""));
+    assert_eq!(ms.description, String::from_str(&env, ""));
+}
+
+#[test]
+fn test_create_milestone_very_long_title() {
+    let (env, client, _quest_client, owner) = setup();
+    
+    // Create a very long string (500 characters)
+    let long_title = "a".repeat(500);
+    let result = client.try_create_milestone(
+        &owner,
+        &0,
+        &String::from_str(&env, &long_title),
+        &String::from_str(&env, "Description"),
+        &100,
+    );
+    // Should succeed - contract doesn't validate string length
+    assert_eq!(result, Ok(Ok(0)));
+    
+    let ms = client.get_milestone(&0, &0);
+    assert_eq!(ms.title, String::from_str(&env, &long_title));
+}
+
+#[test]
+fn test_create_milestone_very_long_description() {
+    let (env, client, _quest_client, owner) = setup();
+    
+    // Create a very long string (1000 characters)
+    let long_desc = "b".repeat(1000);
+    let result = client.try_create_milestone(
+        &owner,
+        &0,
+        &String::from_str(&env, "Title"),
+        &String::from_str(&env, &long_desc),
+        &100,
+    );
+    // Should succeed - contract doesn't validate string length
+    assert_eq!(result, Ok(Ok(0)));
+    
+    let ms = client.get_milestone(&0, &0);
+    assert_eq!(ms.description, String::from_str(&env, &long_desc));
+}
+
+#[test]
+fn test_create_milestone_negative_reward() {
+    let (env, client, _quest_client, owner) = setup();
+    let result = client.try_create_milestone(
+        &owner,
+        &0,
+        &String::from_str(&env, "Title"),
+        &String::from_str(&env, "Description"),
+        &-100, // Negative reward
+    );
+    // Should succeed - contract doesn't validate negative amounts
+    assert_eq!(result, Ok(Ok(0)));
+    
+    let ms = client.get_milestone(&0, &0);
+    assert_eq!(ms.reward_amount, -100);
+}
+
+#[test]
+fn test_create_milestone_non_existent_quest() {
+    let (env, client, _quest_client, owner) = setup();
+    let result = client.try_create_milestone(
+        &owner,
+        &999, // Non-existent quest ID
+        &String::from_str(&env, "Title"),
+        &String::from_str(&env, "Description"),
+        &100,
+    );
+    // Should fail because quest doesn't exist
+    assert_eq!(result, Err(Ok(Error::NotFound)));
+}
+
+#[test]
+fn test_verify_completion_non_existent_quest() {
+    let (env, client, _quest_client, owner) = setup();
+    let enrollee = Address::generate(&env);
+    let result = client.try_verify_completion(&owner, &999, &0, &enrollee); // Non-existent quest
+    assert_eq!(result, Err(Ok(Error::NotFound)));
+}
+
+#[test]
+fn test_verify_completion_non_existent_milestone() {
+    let (env, client, _quest_client, owner) = setup();
+    create_ms(&env, &client, &_quest_client, &owner, 0, "Task", 100);
+    
+    let enrollee = Address::generate(&env);
+    let result = client.try_verify_completion(&owner, &0, &999, &enrollee); // Non-existent milestone
+    assert_eq!(result, Err(Ok(Error::NotFound)));
 }

@@ -1,6 +1,13 @@
 #![no_std]
 use soroban_sdk::{contract, contracterror, contractimpl, contracttype, contractclient, Address, Env, String, Vec};
 
+#[contracttype]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Visibility {
+    Public = 0,
+    Private = 1,
+}
+
 // Quest contract error type (must match the quest contract)
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -28,6 +35,7 @@ pub struct QuestInfo {
     pub description: String,
     pub token_addr: Address,
     pub created_at: u64,
+    pub visibility: Visibility,
 }
 
 // Milestone contract: define milestones per quest, track completions.
@@ -176,7 +184,6 @@ impl MilestoneContract {
         flat_reward: i128,
     ) -> Result<(), Error> {
         owner.require_auth();
-        Self::require_owner(&env, workspace_id, &owner)?;
 
         if matches!(mode, DistributionMode::Flat) && flat_reward <= 0 {
             return Err(Error::InvalidAmount);
@@ -240,7 +247,7 @@ impl MilestoneContract {
         let mode: DistributionMode = env
             .storage()
             .persistent()
-            .get(&DataKey::Mode(workspace_id))
+            .get(&DataKey::Mode(quest_id))
             .unwrap_or(DistributionMode::Custom);
 
         let reward = match mode {
@@ -248,10 +255,10 @@ impl MilestoneContract {
             DistributionMode::Flat => env
                 .storage()
                 .persistent()
-                .get(&DataKey::FlatReward(workspace_id))
+                .get(&DataKey::FlatReward(quest_id))
                 .unwrap_or(milestone.reward_amount),
             DistributionMode::Competitive(max_winners) => {
-                let cnt_key = DataKey::MilestoneCompletionCount(workspace_id, milestone_id);
+                let cnt_key = DataKey::MilestoneCompletionCount(quest_id, milestone_id);
                 let cnt: u32 = env.storage().persistent().get(&cnt_key).unwrap_or(0);
                 env.storage().persistent().set(&cnt_key, &(cnt + 1));
                 env.storage()
