@@ -17,6 +17,8 @@ export interface WalletErrorState {
 interface WalletState {
   address: string | null
   connected: boolean
+  networkPassphrase: string | null
+  isSupportedNetwork: boolean
   loading: boolean
   installed: boolean
   network: WalletNetwork | null
@@ -81,6 +83,8 @@ export function useWallet() {
   const [state, setState] = useState<WalletState>({
     address: null,
     connected: false,
+    networkPassphrase: null,
+    isSupportedNetwork: true,
     loading: false,
     installed: true,
     network: null,
@@ -96,6 +100,8 @@ export function useWallet() {
       ...s,
       address: null,
       connected: false,
+      networkPassphrase: null,
+      isSupportedNetwork: true,
       loading: false,
       error: null,
     }))
@@ -106,11 +112,15 @@ export function useWallet() {
       const details = await freighterApi.getNetworkDetails?.()
       const detected = parseNetwork(details?.networkPassphrase, details?.network)
       const detectedName = details?.network ?? getNetworkName(detected)
+      const passphrase = details?.networkPassphrase ?? null
+      const isSupported = !passphrase || passphrase === NETWORK_PASSPHRASE
 
       setState(s => ({
         ...s,
         network: detected,
         networkName: detectedName,
+        networkPassphrase: passphrase,
+        isSupportedNetwork: isSupported,
         wrongNetwork: detected !== "unknown" && detected !== s.expectedNetwork,
       }))
     } catch {
@@ -164,7 +174,6 @@ export function useWallet() {
 
       sessionStorage.removeItem(DISCONNECTED_KEY)
       const { address } = await freighterApi.requestAccess()
-
       await syncNetwork()
 
       setState(s => ({
